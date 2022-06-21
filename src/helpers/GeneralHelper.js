@@ -19,18 +19,16 @@ const GetTablesHelper = async(table) => {
 }
 
 const CreateUserHelper = async(user_name, user_email, user_password, user_phone) => {
-    try {
-        bcrypt.hash(user_password, 10).then(async(hash) => {
-            const newUser = new UserModel();
-            newUser.user_name = user_name;
-            newUser.user_email = user_email;
-            newUser.user_password = hash;
-            newUser.user_phone = user_phone;
-            const response = await newUser.save();
-        })
-    } catch (error) {
-        throw `Error creating user ERROR:${error}`;
-    }
+    const userId = bcrypt.hash(user_password, 10).then(async(hash) => {
+        const user = new UserModel();
+        user.user_name = user_name;
+        user.user_email = user_email;
+        user.user_password = hash;
+        user.user_phone = user_phone;
+        await user.save();
+        return user._id;
+    })
+    return userId;
 }
 
 const LoginUserHelper = async(user_name, user_email, user_password) => {
@@ -38,12 +36,12 @@ const LoginUserHelper = async(user_name, user_email, user_password) => {
     const userName = await allUsers.findOne({ user_name: user_name }, null);
     const userEmail = await allUsers.findOne({ user_email: user_email }, null);
     if (!userName) {
-        return false;
+        return { status: false };
     } else if (!userEmail) {
-        return false;
+        return { status: false };
     } else {
-        const result = await bcrypt.compare(user_password, user.user_password);
-        return result;
+        const result = await bcrypt.compare(user_password, userEmail.user_password);
+        return { result, status: true, user_id: userEmail._id };
     }
 }
 
@@ -60,10 +58,9 @@ const UserExistHelper = async(user_email, user_name) => {
     }
 }
 
-
 module.exports = {
     GetTablesHelper,
     CreateUserHelper,
     UserExistHelper,
-    LoginUserHelper
+    LoginUserHelper,
 }

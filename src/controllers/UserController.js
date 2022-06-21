@@ -1,12 +1,27 @@
+require('dotenv').config({ path: "./process.env" });
+const jwt = require('jsonwebtoken');
 const { GetTablesHelper, CreateUserHelper, UserExistHelper, LoginUserHelper } = require('../helpers/GeneralHelper');
-const mongoose = require('mongoose');
 
 // user_img AGREGAR A UPDATE USER
 const CreateUser = async(req, res) => {
     const { user_name, user_email, user_password, user_phone } = req.body;
     const userExits = await UserExistHelper(user_email, user_name);
     if (userExits === false) {
-        // await CreateUserHelper(user_name, user_email, user_password, user_phone)
+        try {
+            //create user and get id
+            const userId = await CreateUserHelper(user_name, user_email, user_password, user_phone);
+            const maxAge = 3 * 60 * 60;
+            const token = jwt.sign({ id: userId, user_name }, process.env.JWT, {
+                expiresIn: maxAge
+            });
+            res.cookie("jwt", token, {
+                httpOnly: true,
+                maxAge: maxAge * 1000
+            });
+        } catch (error) {
+            throw `Error creating user ERROR:${error}`;
+        }
+
         res.status(201).json({
             message: "User was created successfully"
         });
@@ -30,15 +45,26 @@ const LoginUser = async(req, res) => {
         })
     }
     try {
-        const userLogin = await LoginUserHelper(user_name, user_email, user_password);
-        (userLogin) ?
-        res.status(200).json({
-            message: "login succesfull"
-        }): res.status(400).json({
-            message: "incorrect username, email or password "
-        });
+        const user = await LoginUserHelper(user_name, user_email, user_password);
+        if (user.result === true && user.status === true) {
+            const maxAge = 3 * 60 * 60;
+            const token = jwt.sign({ id: user.user_id, user_name }, process.env.JWT, {
+                expiresIn: maxAge
+            });
+            res.cookie("jwt", token, {
+                httpOnly: false,
+                maxAge: maxAge * 1000
+            });
+            res.status(200).json({
+                message: "login succesfull"
+            })
+        } else {
+            res.status(400).json({
+                message: "incorrect username, email or password "
+            });
+        }
     } catch (error) {
-        throw `We had error with: username, email or password`;
+        throw `We had error with: ${error}`;
     }
 }
 

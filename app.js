@@ -1,4 +1,5 @@
 require('dotenv').config({ path: "./process.env" });
+const cookieParser = require("cookie-parser");
 
 const mongodbHelpers = require('./helpers/mongodb');
 
@@ -6,8 +7,9 @@ const mongodbHelpers = require('./helpers/mongodb');
 const express = require('express');
 const app = express();
 
-const port = 8080;
+const port = process.env.PORT;
 
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
