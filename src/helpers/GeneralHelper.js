@@ -45,22 +45,8 @@ const LoginUserHelper = async(user_name, user_email, user_password) => {
     }
 }
 
-const UserExistHelper = async(user_email, user_name) => {
-    const allUsers = await GetTablesHelper('users');
-    const currentUserName = await allUsers.findOne({ user_name: user_name }, null);
-    const currentUserEmail = await allUsers.findOne({ user_email: user_email }, null);
-    if (currentUserName !== null) {
-        return true;
-    } else if (currentUserEmail !== null) {
-        return true;
-    } else {
-        return false;
-    }
-}
-
 module.exports = {
     GetTablesHelper,
     CreateUserHelper,
-    UserExistHelper,
     LoginUserHelper,
 }
